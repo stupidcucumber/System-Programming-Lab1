@@ -3,13 +3,15 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <string.h>
 
-typedef struct 
+typedef struct
 {
     int size;
     int vowels;
     char arr[31];
 } word;
+
 
 bool is_vowel(char vowel)
 {
@@ -26,6 +28,7 @@ bool is_vowel(char vowel)
     return false;
 }
 
+
 void append_letter(word* word, char letter)
 {
     int index = word->size;
@@ -33,6 +36,7 @@ void append_letter(word* word, char letter)
     word->arr[index] = letter;
     word->size = index + 1;
 }
+
 
 word* get_next_word(FILE *file_ptr)
 {
@@ -52,11 +56,39 @@ word* get_next_word(FILE *file_ptr)
     return found;
 }
 
+
+bool contains(word* search_word, FILE* file_ptr)
+{
+
+    long int pos = ftell(file_ptr);
+
+    if (pos == 0)
+    {
+        return false;
+    }
+    
+    fseek(file_ptr, 0, SEEK_SET);
+    while (!feof(file_ptr))
+    {
+        word* temp_word = get_next_word(file_ptr);
+        printf("%s", temp_word->arr);
+        if (strncmp(search_word->arr, temp_word->arr, search_word->size) == 0)
+        {
+            return true;
+        }
+    }
+
+    fseek(file_ptr, pos, SEEK_SET);
+    return false;
+}
+
+
 bool file_exists(const char filename[])
 {
     struct stat buffer;
     return stat(filename, &buffer) == 0 ? true : false;
 }
+
 
 int main(int argc, char *argv[]) 
 {
@@ -81,7 +113,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        result_ptr = fopen(result_filename, "w");
+        result_ptr = fopen(result_filename, "w+");
     }
 
     if (source_ptr == NULL)
@@ -96,7 +128,7 @@ int main(int argc, char *argv[])
         printf("Current word is of size %d, the number of vowels is %d, the word itself is %s\n", 
                 current_word->size, current_word->vowels, current_word->arr);
 
-        if (current_word->size != 0 && current_word->size == current_word->vowels)
+        if (current_word->size != 0 && current_word->size == current_word->vowels && !contains(current_word, result_ptr))
         {
             fputs(current_word->arr, result_ptr);
             fputs("\n", result_ptr);
